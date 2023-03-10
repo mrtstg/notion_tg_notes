@@ -9,6 +9,14 @@ class AbstractPageProperty(ABC):
     def get_json(self) -> dict:
         pass
 
+    @property
+    def ascending_sort(self) -> dict:
+        return {"property": self.property_name, "direction": "ascending"}
+
+    @property
+    def descending_sort(self) -> dict:
+        return {"property": self.property_name, "direction": "descending"}
+
 
 class TitlePageProperty(AbstractPageProperty):
     _text: str
@@ -53,6 +61,17 @@ class CheckboxPageProperty(AbstractPageProperty):
     def get_json(self) -> dict:
         assert self.property_name != ""
         return {self.property_name: {"checkbox": self._checked}}
+
+    @property
+    def equal_filter(self) -> dict:
+        return {"property": self.property_name, "checkbox": {"equals": self.checked}}
+
+    @property
+    def not_equal_filter(self) -> dict:
+        return {
+            "property": self.property_name,
+            "checkbox": {"does_not_equal": self.checked},
+        }
 
 
 class SelectPageProperty(AbstractPageProperty):
