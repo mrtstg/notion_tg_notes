@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Any
 from . import API_URL
 from .structs import NotionDatabase
 from .properties import (
@@ -9,6 +11,20 @@ from .properties import (
 )
 import aiohttp
 import asyncio
+
+
+class NotionSearchResult:
+    _sorts: list[dict]
+    results: list[dict]
+    has_more: bool
+    next_cursor: str | None = None
+
+    def __init__(self, data: dict, sorts: list[dict]):
+        self._sorts = sorts
+        self.results = data["results"]
+        self.has_more = data["has_more"]
+        if self.has_more:
+            self.next_cursor = data["next_cursor"]
 
 
 class NotionNote:
@@ -89,6 +105,40 @@ class NotionApi:
         )
         resp.raise_for_status()
         return await resp.json()
+
+    async def query_notes(
+        self,
+        database_id: str,
+        filters: list[dict] | dict = {},
+        sorts: list[dict] = [],
+        page_size: int = 100,
+    ) -> NotionSearchResult:
+        assert self.client is not None
+        payload: dict[str, Any] = {"page_size": page_size}
+        if sorts:
+            payload["sorts"] = sorts
+        if filters != {}:
+            payload["filter"] = filters
+        resp = await self.client.post(
+            "/v1/databases/%s/query" % database_id, json=payload
+        )
+        resp.raise_for_status()
+        return NotionSearchResult(await resp.json(), sorts)
+
+    async def load_next_query_page(
+        self, database_id: str, results: NotionSearchResult, page_size: int = 100
+    ) -> NotionSearchResult:
+        assert results.next_cursor is not None
+        assert self.client is not None
+        resp = await self.client.post(
+            "/v1/databases/%s/query" % database_id,
+            json={
+                "start_cursor": results.next_cursor,
+                "page_size": 100,
+                "sorts": results._sorts,
+            },
+        )
+        return NotionSearchResult(await resp.json(), results._sorts)
 
     def __del__(self):
         if self.client is not None:
