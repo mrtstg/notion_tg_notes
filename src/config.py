@@ -3,6 +3,7 @@ import yaml
 
 class FileConfig:
     token: str
+    tg_token: str
     db_id: str
     _path: str
 
