@@ -149,7 +149,7 @@ class DatePageProperty(AbstractPageProperty):
 
     @property
     def begin_date(self) -> datetime.datetime:
-        return self.begin_date
+        return self._begin_date
 
     @begin_date.setter
     def begin_date(self, value: datetime.datetime):
