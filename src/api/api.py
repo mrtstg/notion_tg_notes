@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 from typing import Any
 from . import API_URL
 from .structs import NotionDatabase
@@ -42,6 +43,57 @@ class NotionNote:
         self.importance = SelectPageProperty("Importance")
         self.progress = SelectPageProperty("Progress")
         self.category = MultiSelectPageProperty("Category")
+
+    @staticmethod
+    def from_json(page: dict) -> NotionNote:
+        properties: dict = page["properties"]
+        obj = NotionNote()
+        obj.remind.checked = properties["Remind"]["checkbox"]
+        obj.title.text = properties["Title"]["title"][0]["text"]["content"]
+        obj.importance.selected = properties["Importance"]["select"]["name"]
+        obj.progress.selected = properties["Progress"]["select"]["name"]
+        obj.category.variants = list(
+            map(lambda x: x["name"], properties["Category"]["multi_select"])
+        )
+        for attr, key in {
+            "begin_date": "start",
+            "end_date": "end",
+            "timezone": "time_zone",
+        }.items():
+            value: str | None = properties["Date"]["date"][key]
+            if "date" in attr and value is not None:
+                setattr(obj.date, attr, datetime.datetime.fromisoformat(value))
+                continue
+            setattr(obj.date, attr, value)
+        return obj
+
+    @property
+    def title_value(self) -> str:
+        return self.title.text
+
+    @property
+    def remind_value(self) -> bool:
+        return self.remind.checked
+
+    @property
+    def begin_date_value(self) -> datetime.datetime:
+        return self.date.begin_date
+
+    @property
+    def end_date_value(self) -> datetime.datetime | None:
+        return self.date.end_date
+
+    @property
+    def importance_value(self) -> str:
+        return self.importance.selected
+
+    @property
+    def progress_value(self) -> str:
+        return self.progress.selected
+
+    @property
+    def categories_value(self) -> list[str]:
+        return self.category.variants
 
     def get_json(self) -> dict:
         data = {}
