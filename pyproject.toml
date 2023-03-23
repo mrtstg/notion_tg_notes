@@ -13,6 +13,7 @@ aiogram = "3.0.0b7"
 aiohttp = "^3.8.4"
 pyyaml = "^6.0"
 datetime = "^5.0"
+numpy = "^1.24.2"
 
 
 [build-system]
