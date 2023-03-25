@@ -1,18 +1,35 @@
 from typing import Callable
-from aiogram import F, Router, types
+from aiogram import F, Router
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
+from .date_mapper import (
+    AbstractDateMapper,
+    ClosestWeekDayDateMapper,
+    TomorrowDateMapper,
+)
 from . import make_row_keyboard
 from config import get_config
 
 router = Router()
 CONFIG = get_config()
 
+available_date_mappers: dict[str, AbstractDateMapper] = {
+    "Завтра": TomorrowDateMapper(),
+    "Ближайший ПН": ClosestWeekDayDateMapper(0),
+    "Ближайший ВТ": ClosestWeekDayDateMapper(1),
+    "Ближайшая СР": ClosestWeekDayDateMapper(2),
+    "Ближайший ЧТ": ClosestWeekDayDateMapper(3),
+    "Ближайший ПТ": ClosestWeekDayDateMapper(4),
+    "Ближайшая СБ": ClosestWeekDayDateMapper(5),
+    "Ближайшее ВС": ClosestWeekDayDateMapper(6),
+}
+available_date_mappers_keys: list[str] = list(available_date_mappers.keys())
+
 
 class NoteCreatingStage(StatesGroup):
-    IMPORTANCE, REMIND, PROGESS, CATEGORIES, TITLE = [State() for _ in range(5)]
+    IMPORTANCE, REMIND, PROGESS, CATEGORIES, TITLE, DATE = [State() for _ in range(6)]
 
 
 @router.message(Command("note"))
@@ -65,9 +82,10 @@ async def set_note_remind(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.CATEGORIES, F.text == "done")
 async def end_note_creation(message: Message, state: FSMContext):
     await message.answer(
-        text=str(await state.get_data()), reply_markup=types.ReplyKeyboardRemove()  # type: ignore
+        text="Введите дату или диапазон дат, на которое нужно назначить заметку.",
+        reply_markup=make_row_keyboard(available_date_mappers_keys),
     )
-    await state.set_state(None)
+    await state.set_state(NoteCreatingStage.DATE)
 
 
 @router.message(NoteCreatingStage.CATEGORIES, F.text.in_(CONFIG.categories_values))
@@ -87,3 +105,16 @@ async def note_category_action(message: Message, state: FSMContext):
         await message.answer(
             text="Категория добавлена!\n" + generate_categories(cat_list)
         )
+
+
+@router.message(NoteCreatingStage.DATE, F.text.in_(available_date_mappers_keys))
+async def date_bindings_action(message: Message, state: FSMContext):
+    assert message.text is not None
+    date_mapper = available_date_mappers[message.text]
+    await state.update_data(
+        begin_date=date_mapper.get_begin_date(), end_date=date_mapper.get_end_date()
+    )
+    await message.answer(
+        str(await state.get_data()), reply_markup=ReplyKeyboardRemove()  # type: ignore
+    )
+    await state.set_state(None)
