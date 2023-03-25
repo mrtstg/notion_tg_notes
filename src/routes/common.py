@@ -11,4 +11,4 @@ router = Router()
 @router.message(Text(text="отмена"))
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer(text="Действие отменено", reply_markup=ReplyKeyboardRemove())
+    await message.answer(text="Действие отменено", reply_markup=ReplyKeyboardRemove())  # type: ignore
