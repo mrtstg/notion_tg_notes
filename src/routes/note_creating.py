@@ -1,4 +1,5 @@
-from typing import Callable
+import datetime
+from typing import Callable, Match
 from aiogram import F, Router
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
@@ -30,6 +31,13 @@ available_date_mappers_keys: list[str] = list(available_date_mappers.keys())
 
 class NoteCreatingStage(StatesGroup):
     IMPORTANCE, REMIND, PROGESS, CATEGORIES, TITLE, DATE = [State() for _ in range(6)]
+
+
+async def create_note_in_notion(message: Message, state: FSMContext):
+    await message.answer(
+        str(await state.get_data()), reply_markup=ReplyKeyboardRemove()  # type: ignore
+    )
+    await state.set_state(None)
 
 
 @router.message(Command("note"))
@@ -114,7 +122,43 @@ async def date_bindings_action(message: Message, state: FSMContext):
     await state.update_data(
         begin_date=date_mapper.get_begin_date(), end_date=date_mapper.get_end_date()
     )
-    await message.answer(
-        str(await state.get_data()), reply_markup=ReplyKeyboardRemove()  # type: ignore
+    await create_note_in_notion(message, state)
+
+
+@router.message(
+    NoteCreatingStage.DATE,
+    F.text.regexp(r"^([0-9]{1,2})\.([0-9]{1,2})$").as_("date_match"),
+)
+async def custom_yearless_date_input_action(
+    message: Message, state: FSMContext, date_match: Match[str]
+):
+    await state.update_data(
+        end_date=None,
+        begin_date=datetime.datetime(
+            datetime.datetime.now().year,
+            int(date_match.group(2)),
+            int(date_match.group(1)),
+        ),
     )
-    await state.set_state(None)
+    await message.answer(str(await state.get_data()))
+
+
+@router.message(
+    NoteCreatingStage.DATE,
+    F.text.regexp(r"^([0-9]{1,2})\.([0-9]{1,2})-([0-9]{1,2})\.([0-9]{1,2})$").as_(
+        "date_match"
+    ),
+)
+async def custon_yearless_date_range_input_action(
+    message: Message, state: FSMContext, date_match: Match[str]
+):
+    now = datetime.datetime.now()
+    await state.update_data(
+        end_date=datetime.datetime(
+            now.year, int(date_match.group(2)), int(date_match.group(1))
+        ),
+        begin_date=datetime.datetime(
+            now.year, int(date_match.group(4)), int(date_match.group(3))
+        ),
+    )
+    await message.answer(str(await state.get_data()))
