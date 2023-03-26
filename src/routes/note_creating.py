@@ -1,10 +1,11 @@
 import datetime
-from typing import Callable, Match
+from typing import Any, Callable, Match
 from aiogram import F, Router
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
+from api.api import NotionApi, NotionNote
 from .date_mapper import (
     AbstractDateMapper,
     ClosestWeekDayDateMapper,
@@ -33,11 +34,30 @@ class NoteCreatingStage(StatesGroup):
     IMPORTANCE, REMIND, PROGESS, CATEGORIES, TITLE, DATE = [State() for _ in range(6)]
 
 
-async def create_note_in_notion(message: Message, state: FSMContext):
-    await message.answer(
-        str(await state.get_data()), reply_markup=ReplyKeyboardRemove()  # type: ignore
-    )
+async def create_note_in_notion(message: Message, state: FSMContext, api: NotionApi):
+    message_data: dict[Any, Any] = {
+        "reply_markup": ReplyKeyboardRemove(),  # type: ignore
+        "text": "Заметка создана!",
+    }
+
+    data = await state.get_data()
+    note = NotionNote()
+    note.date.begin_date = data["begin_date"]
+    note.date.end_date = data["end_date"]
+    note.category.variants = data["categories"]
+    note.title.text = data["title"]
+    note.importance.selected = data["importance"]
+    note.progress.selected = data["progress"]
+    note.remind.checked = data["remind"]
+
+    try:
+        await api.create_note(note, CONFIG.db_id)
+    except:
+        message_data["text"] = "Ошибка при создании заметки!"
+
+    await message.answer(**message_data)  # type: ignore
     await state.set_state(None)
+    await state.set_data({})
 
 
 @router.message(Command("note"))
@@ -116,13 +136,15 @@ async def note_category_action(message: Message, state: FSMContext):
 
 
 @router.message(NoteCreatingStage.DATE, F.text.in_(available_date_mappers_keys))
-async def date_bindings_action(message: Message, state: FSMContext):
+async def date_bindings_action(
+    message: Message, state: FSMContext, api_client: NotionApi
+):
     assert message.text is not None
     date_mapper = available_date_mappers[message.text]
     await state.update_data(
         begin_date=date_mapper.get_begin_date(), end_date=date_mapper.get_end_date()
     )
-    await create_note_in_notion(message, state)
+    await create_note_in_notion(message, state, api_client)
 
 
 @router.message(
@@ -130,7 +152,7 @@ async def date_bindings_action(message: Message, state: FSMContext):
     F.text.regexp(r"^([0-9]{1,2})\.([0-9]{1,2})$").as_("date_match"),
 )
 async def custom_yearless_date_input_action(
-    message: Message, state: FSMContext, date_match: Match[str]
+    message: Message, state: FSMContext, date_match: Match[str], api_client: NotionApi
 ):
     await state.update_data(
         end_date=None,
@@ -140,7 +162,7 @@ async def custom_yearless_date_input_action(
             int(date_match.group(1)),
         ),
     )
-    await message.answer(str(await state.get_data()))
+    await create_note_in_notion(message, state, api_client)
 
 
 @router.message(
@@ -150,7 +172,7 @@ async def custom_yearless_date_input_action(
     ),
 )
 async def custon_yearless_date_range_input_action(
-    message: Message, state: FSMContext, date_match: Match[str]
+    message: Message, state: FSMContext, date_match: Match[str], api_client: NotionApi
 ):
     now = datetime.datetime.now()
     await state.update_data(
@@ -161,4 +183,4 @@ async def custon_yearless_date_range_input_action(
             now.year, int(date_match.group(4)), int(date_match.group(3))
         ),
     )
-    await message.answer(str(await state.get_data()))
+    await create_note_in_notion(message, state, api_client)
