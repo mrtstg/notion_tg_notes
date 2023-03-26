@@ -163,10 +163,16 @@ class DatePageProperty(AbstractPageProperty):
     def end_date(self, value: datetime.datetime | None):
         self._end_date = value
 
+    @staticmethod
+    def stringify_date(date: datetime.datetime) -> str:
+        if date.minute != 0 or date.hour != 0:
+            return date.isoformat()
+        return date.strftime("%Y-%m-%d")
+
     def get_json(self) -> dict:
-        data = {"start": self._begin_date.isoformat()}
+        data = {"start": DatePageProperty.stringify_date(self._begin_date)}
         if self._end_date is not None:
-            data["end"] = self._end_date.isoformat()
+            data["end"] = DatePageProperty.stringify_date(self._end_date)
         if self.timezone is not None:
             data["time_zone"] = self.timezone
         return {self.property_name: {"date": data}}
