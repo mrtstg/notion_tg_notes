@@ -1,23 +1,29 @@
-from datetime import datetime
-from api.api import NotionApi, NotionNote
-from api.properties import CheckboxPageProperty
-from config import FileConfig
+from api.api import NotionApi
+from config import get_config
 import asyncio
-import os
 from aiogram import Bot, Dispatcher
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+from aiogram.types import Message
 from routes import common, note_creating
 
-CONFIG = FileConfig(os.environ.get("CONFIG_FILE", "config.yaml"))
+CONFIG = get_config()
 
 loop = asyncio.new_event_loop()
 api = NotionApi(CONFIG.token, loop)
 asyncio.set_event_loop(loop)
 
 
+class ApiClientPassMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: Message, data: dict):
+        data["api_client"] = api
+        return await handler(event, data)
+
+
 async def main():
     dp = Dispatcher()
     bot = Bot(CONFIG.tg_token)
 
+    note_creating.router.message.middleware(ApiClientPassMiddleware())
     dp.include_router(common.router)
     dp.include_router(note_creating.router)
 
