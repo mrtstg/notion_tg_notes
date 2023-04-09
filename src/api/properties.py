@@ -176,3 +176,24 @@ class DatePageProperty(AbstractPageProperty):
         if self.timezone is not None:
             data["time_zone"] = self.timezone
         return {self.property_name: {"date": data}}
+
+    def _begin_date_filter(self, key: str) -> dict:
+        return {
+            "property": self.property_name,
+            "date": {key: self.stringify_date(self.begin_date)},
+        }
+
+    def equals_filter(self) -> dict:
+        return self._begin_date_filter("equals")
+
+    def after_filter(self) -> dict:
+        return self._begin_date_filter("after")
+
+    def before_filter(self) -> dict:
+        return self._begin_date_filter("before")
+
+    def on_or_after_filter(self) -> dict:
+        return self._begin_date_filter("on_or_after")
+
+    def on_or_before_filter(self) -> dict:
+        return self._begin_date_filter("on_or_before")
