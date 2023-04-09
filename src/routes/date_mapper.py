@@ -26,8 +26,11 @@ class ClosestWeekDayDateMapper(AbstractDateMapper):
     def get_begin_date(self) -> datetime.datetime:
         now_date = datetime.datetime.now()
         for day_num in range(1, 8):
-            date = datetime.datetime(
-                now_date.year, now_date.month, now_date.day + day_num
+            date = datetime.datetime.fromtimestamp(
+                datetime.datetime(
+                    now_date.year, now_date.month, now_date.day
+                ).timestamp()
+                + 86400 * day_num
             )
             if date.weekday() == self.day:
                 return date
