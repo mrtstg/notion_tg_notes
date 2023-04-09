@@ -183,17 +183,22 @@ class DatePageProperty(AbstractPageProperty):
             "date": {key: self.stringify_date(self.begin_date)},
         }
 
+    @property
     def equals_filter(self) -> dict:
         return self._begin_date_filter("equals")
 
+    @property
     def after_filter(self) -> dict:
         return self._begin_date_filter("after")
 
+    @property
     def before_filter(self) -> dict:
         return self._begin_date_filter("before")
 
+    @property
     def on_or_after_filter(self) -> dict:
         return self._begin_date_filter("on_or_after")
 
+    @property
     def on_or_before_filter(self) -> dict:
         return self._begin_date_filter("on_or_before")
