@@ -94,6 +94,17 @@ class SelectPageProperty(AbstractPageProperty):
         assert self.property_name != ""
         return {self.property_name: {"select": {"name": self.selected}}}
 
+    @property
+    def equals_filter(self) -> dict:
+        return {"property": self.property_name, "select": {"equals": self._selected}}
+
+    @property
+    def not_equals_filter(self) -> dict:
+        return {
+            "property": self.property_name,
+            "select": {"does_not_equal": self._selected},
+        }
+
 
 class MultiSelectPageProperty(AbstractPageProperty):
     _selected: list[str]
