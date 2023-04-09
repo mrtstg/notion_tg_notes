@@ -129,6 +129,18 @@ class MultiSelectPageProperty(AbstractPageProperty):
             }
         }
 
+    def contains_filter(self, variant_name: str) -> dict:
+        return {
+            "property": self.property_name,
+            "multi_select": {"contains": variant_name},
+        }
+
+    def not_contains_filter(self, variant_name: str) -> dict:
+        return {
+            "property": self.property_name,
+            "multi_select": {"does_not_contain": variant_name},
+        }
+
 
 class DatePageProperty(AbstractPageProperty):
     _timezone: str | None = None
