@@ -1,10 +1,17 @@
-from api.api import NotionApi
+from api.api import NotionApi, NotionNote
+import datetime
+from api.properties import (
+    DatePageProperty,
+    MultiSelectPageProperty,
+    SelectPageProperty,
+    TitlePageProperty,
+)
 from config import get_config
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import Message
-from routes import common, note_creating
+from routes import common, note_creating, note_querying
 
 CONFIG = get_config()
 
@@ -24,7 +31,9 @@ async def main():
     bot = Bot(CONFIG.tg_token)
 
     note_creating.router.message.middleware(ApiClientPassMiddleware())
+    note_querying.router.message.middleware(ApiClientPassMiddleware())
     dp.include_router(common.router)
+    dp.include_router(note_querying.router)
     dp.include_router(note_creating.router)
 
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
