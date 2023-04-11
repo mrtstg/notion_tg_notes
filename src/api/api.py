@@ -78,8 +78,17 @@ class NotionNote:
             case "Завершено":
                 progress = "✅"
 
-        return "%(progress)s %(title)s" % {
+        match self.importance.selected:
+            case "Важно":
+                importance = "🔴"
+            case "Неважно":
+                importance = "⚪"
+            case "Срочно":
+                importance = "🔥"
+
+        return "%(progress)s %(importance)s %(title)s" % {
             "progress": progress,
+            "importance": importance,
             "title": self.title_value,
         }
 
