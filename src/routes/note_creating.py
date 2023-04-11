@@ -9,6 +9,7 @@ from api.api import NotionApi, NotionNote
 from .date_mapper import (
     AbstractDateMapper,
     ClosestWeekDayDateMapper,
+    TodayDateMapper,
     TomorrowDateMapper,
 )
 from . import make_row_keyboard
@@ -18,6 +19,7 @@ router = Router()
 CONFIG = get_config()
 
 available_date_mappers: dict[str, AbstractDateMapper] = {
+    "Сегодня": TodayDateMapper(),
     "Завтра": TomorrowDateMapper(),
     "Ближайший ПН": ClosestWeekDayDateMapper(0),
     "Ближайший ВТ": ClosestWeekDayDateMapper(1),

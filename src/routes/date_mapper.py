@@ -47,3 +47,12 @@ class TomorrowDateMapper(AbstractDateMapper):
 
     def get_end_date(self) -> None:
         return None
+
+
+class TodayDateMapper(AbstractDateMapper):
+    def get_end_date(self) -> datetime.datetime | None:
+        return None
+
+    def get_begin_date(self) -> datetime.datetime:
+        now = TodayDateMapper.now_date()
+        return datetime.datetime(now.year, now.month, now.day)
