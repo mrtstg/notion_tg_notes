@@ -41,6 +41,14 @@ class TitlePageProperty(AbstractPageProperty):
             }
         }
 
+    @property
+    def equals_filter(self) -> dict:
+        return {"property": self.property_name, "rich_text": {"equals": self.text}}
+
+    @property
+    def contains_filter(self) -> dict:
+        return {"property": self.property_name, "rich_text": {"contains": self.text}}
+
 
 class CheckboxPageProperty(AbstractPageProperty):
     _checked: bool
