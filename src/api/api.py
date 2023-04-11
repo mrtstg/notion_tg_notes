@@ -67,6 +67,22 @@ class NotionNote:
             setattr(obj.date, attr, value)
         return obj
 
+    def represent(self) -> str:
+        progress: str | None = None
+        importance: str | None = None
+        match self.progress.selected:
+            case "Не начато":
+                progress = "📁"
+            case "Начато":
+                progress = "📌"
+            case "Завершено":
+                progress = "✅"
+
+        return "%(progress)s %(title)s" % {
+            "progress": progress,
+            "title": self.title_value,
+        }
+
     @property
     def title_value(self) -> str:
         return self.title.text
