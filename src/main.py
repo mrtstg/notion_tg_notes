@@ -14,6 +14,7 @@ from aiogram.types import Message
 from routes import common, note_creating, note_querying
 
 CONFIG = get_config()
+CONFIG.validate_daily_notes()
 
 loop = asyncio.new_event_loop()
 api = NotionApi(CONFIG.token, loop)
