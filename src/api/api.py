@@ -39,7 +39,7 @@ class NotionNote:
     def __init__(self):
         self.title = TitlePageProperty("Title")
         self.remind = CheckboxPageProperty("Remind")
-        self.date = DatePageProperty("Date")
+        self.date = DatePageProperty("Date", "Europe/Moscow")
         self.importance = SelectPageProperty("Importance")
         self.progress = SelectPageProperty("Progress")
         self.category = MultiSelectPageProperty("Category")
