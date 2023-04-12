@@ -70,6 +70,10 @@ class NotionNote:
     def represent(self) -> str:
         progress: str | None = None
         importance: str | None = None
+        diff = self.date.get_difference(True)
+        minutes = diff.seconds / 60
+        hours, minutes = divmod(minutes, 60)
+
         match self.progress.selected:
             case "Не начато":
                 progress = "📁"
@@ -86,11 +90,17 @@ class NotionNote:
             case "Срочно":
                 importance = "🔥"
 
-        return "%(progress)s %(importance)s %(title)s" % {
-            "progress": progress,
-            "importance": importance,
-            "title": self.title_value,
-        }
+        return (
+            "[%(days)s %(hours)s:%(minutes)s ] %(progress)s %(importance)s %(title)s"
+            % {
+                "days": "" if diff.days == 0 else f"{diff.days} д., ",
+                "hours": int(hours),
+                "minutes": int(minutes),
+                "progress": progress,
+                "importance": importance,
+                "title": self.title_value,
+            }
+        )
 
     @property
     def title_value(self) -> str:
