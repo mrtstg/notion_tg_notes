@@ -68,20 +68,10 @@ class NotionNote:
         return obj
 
     def represent(self) -> str:
-        progress: str | None = None
         importance: str | None = None
-        diff = self.date.get_difference(True)
-        minutes = diff.seconds / 60
+        delta_class = self.date.get_difference(True)
+        minutes = delta_class.delta.seconds / 60
         hours, minutes = divmod(minutes, 60)
-
-        match self.progress.selected:
-            case "Не начато":
-                progress = "📁"
-            case "Начато":
-                progress = "📌"
-            case "Завершено":
-                progress = "✅"
-
         match self.importance.selected:
             case "Важно":
                 importance = "🔴"
@@ -90,17 +80,23 @@ class NotionNote:
             case "Срочно":
                 importance = "🔥"
 
-        return (
-            "[%(days)s %(hours)s:%(minutes)s ] %(progress)s %(importance)s %(title)s"
+        delta_text = (
+            ""
+            if not delta_class.is_future
+            else " [%(days)s %(hours)s:%(minutes)s ] "
             % {
-                "days": "" if diff.days == 0 else f"{diff.days} д., ",
+                "days": ""
+                if delta_class.delta.days == 0
+                else f"{delta_class.delta.days} д., ",
                 "hours": int(hours),
                 "minutes": int(minutes),
-                "progress": progress,
-                "importance": importance,
-                "title": self.title_value,
             }
         )
+        return "%(importance)s%(delta_text)s %(title)s" % {
+            "delta_text": delta_text,
+            "importance": importance,
+            "title": self.title_value,
+        }
 
     @property
     def title_value(self) -> str:
