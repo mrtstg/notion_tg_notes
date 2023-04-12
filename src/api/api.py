@@ -190,7 +190,8 @@ class NotionApi:
                 "properties": note.get_json(),
             },
         )
-        resp.raise_for_status()
+        if resp.status != 200:
+            raise Exception(await resp.json())
         return await resp.json()
 
     async def query_notes(
