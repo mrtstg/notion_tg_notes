@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 from api.api import NotionApi, NotionNote
+from api.properties import TitlePageProperty
 from .date_mapper import (
     AbstractDateMapper,
     ClosestWeekDayDateMapper,
@@ -60,6 +61,28 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
     await message.answer(**message_data)  # type: ignore
     await state.set_state(None)
     await state.set_data({})
+
+
+@router.message(Command("daily"))
+async def create_daily_notes(message: Message, api_client: NotionApi):
+    created_amount: int = 0
+    for note_data in CONFIG.daily_notes:
+        search_res = await api_client.query_notes(
+            CONFIG.db_id, TitlePageProperty("Title", note_data["title"]).equals_filter
+        )
+        if search_res.results:
+            continue
+        note = NotionNote()
+        note.title.text = note_data["title"]
+        note.remind.checked = True
+        note.date.begin_date = TodayDateMapper().get_begin_date()
+        note.date.end_date = None
+        note.importance.selected = note_data["importance"]
+        note.progress.selected = "Не начато"
+        note.category.variants = note_data["category"]
+        await api_client.create_note(note, CONFIG.db_id)
+        created_amount += 1
+    await message.answer(f"Создано {created_amount} заметок")
 
 
 @router.message(Command("note"))
