@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import datetime
+import pytz
 
 
 class AbstractPageProperty(ABC):
@@ -213,6 +214,15 @@ class DatePageProperty(AbstractPageProperty):
             "property": self.property_name,
             "date": {key: self.stringify_date(self.begin_date)},
         }
+
+    def get_difference(self, prefer_end_date: bool = False) -> datetime.timedelta:
+        date = (
+            self.begin_date
+            if not prefer_end_date or self.end_date is None
+            else self.end_date
+        ).replace(tzinfo=pytz.UTC)
+        now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
+        return max(now, date) - min(now, date)
 
     @property
     def next_week_filter(self) -> dict:
