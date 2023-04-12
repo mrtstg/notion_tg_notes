@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import datetime
 import pytz
+from dataclasses import dataclass
 
 
 class AbstractPageProperty(ABC):
@@ -151,6 +152,12 @@ class MultiSelectPageProperty(AbstractPageProperty):
         }
 
 
+@dataclass
+class DatePropertyDelta:
+    delta: datetime.timedelta
+    is_future: bool = True
+
+
 class DatePageProperty(AbstractPageProperty):
     _timezone: str | None = None
     _begin_date: datetime.datetime
@@ -220,14 +227,15 @@ class DatePageProperty(AbstractPageProperty):
             "date": {key: self.stringify_date(self.begin_date)},
         }
 
-    def get_difference(self, prefer_end_date: bool = False) -> datetime.timedelta:
+    def get_difference(self, prefer_end_date: bool = False) -> DatePropertyDelta:
         date = (
             self.begin_date
             if not prefer_end_date or self.end_date is None
             else self.end_date
         ).replace(tzinfo=pytz.UTC)
         now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
-        return max(now, date) - min(now, date)
+        is_future = now < date
+        return DatePropertyDelta(max(now, date) - min(now, date), is_future)
 
     @property
     def next_week_filter(self) -> dict:
