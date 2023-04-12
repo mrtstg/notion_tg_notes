@@ -10,6 +10,22 @@ router = Router()
 CONFIG = get_config()
 
 
+@router.message(Command("week"))
+async def get_next_week_notes(message: Message, api_client: NotionApi):
+    notes = await api_client.query_notes(
+        CONFIG.db_id,
+        DatePageProperty("Date").next_week_filter,
+        [
+            DatePageProperty("Date").ascending_sort,
+            SelectPageProperty("Importance").descending_sort,
+        ],
+    )
+    text = "Заметки на следующую неделю:\n"
+    for note in notes.results:
+        text += NotionNote.from_json(note).represent() + "\n"
+    await message.answer(text)
+
+
 @router.message(Command("today"))
 async def get_today_notes(message: Message, api_client: NotionApi):
     now = datetime.datetime.now()
