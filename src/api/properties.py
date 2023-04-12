@@ -173,6 +173,11 @@ class DatePageProperty(AbstractPageProperty):
 
     @property
     def timezone(self) -> str | None:
+        if (self.begin_date.minute == 0 and self.begin_date.second == 0) or (
+            self.end_date is None
+            or (self.end_date.minute == 0 and self.end_date.second == 0)
+        ):
+            return None
         return self._timezone
 
     @timezone.setter
