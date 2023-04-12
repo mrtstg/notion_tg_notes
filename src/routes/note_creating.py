@@ -186,3 +186,25 @@ async def custon_yearless_date_range_input_action(
         ),
     )
     await create_note_in_notion(message, state, api_client)
+
+
+@router.message(
+    NoteCreatingStage.DATE,
+    F.text.regexp(r"([0-9]{1,2}):([0-9]{1,2})").as_("date_match"),
+)
+async def custom_time_range_input_action(
+    message: Message, state: FSMContext, date_match: Match[str], api_client: NotionApi
+):
+    now = datetime.datetime.now()
+    try:
+        now = datetime.datetime(
+            now.year,
+            now.month,
+            now.day,
+            int(date_match.group(1)),
+            int(date_match.group(2)),
+        )
+        await state.update_data(end_date=None, begin_date=now)
+    except:
+        await message.answer("Неправильная дата!")
+    await create_note_in_notion(message, state, api_client)
