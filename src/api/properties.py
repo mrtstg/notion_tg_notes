@@ -215,6 +215,10 @@ class DatePageProperty(AbstractPageProperty):
         }
 
     @property
+    def next_week_filter(self) -> dict:
+        return {"property": self.property_name, "date": {"next_week": {}}}
+
+    @property
     def equals_filter(self) -> dict:
         return self._begin_date_filter("equals")
 
