@@ -24,9 +24,8 @@ class FileConfig:
             assert (
                 note["importance"] in self.importance_values
             ), "Значения важности заметки нет в конфиге!"
-            assert (
-                note["category"] in self.categories_values
-            ), "Неизвестная категория заметки!"
+            for cat in note["category"]:
+                assert cat in self.categories_values, "Неизвестная категория заметки!"
             assert len(note["title"]) > 1, "У заметки должен быть заголовок!"
 
 
