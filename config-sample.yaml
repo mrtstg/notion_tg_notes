@@ -1,0 +1,28 @@
+token: secret_TOKEN
+tg_token: 123:tokentoken
+db_id: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+tg_ids: [1]
+
+importance_values:
+  - Важно
+  - Неважно
+  - Срочно
+
+progress_values:
+  - Не начато
+  - Начато
+  - Завершено
+
+categories_values:
+  - Прочее
+  - Личные проекты
+
+daily_notes:
+  -
+    title: Note title
+    importance: Важно
+    category: []
+  -
+    title: Note 2
+    importance: Неважно
+    category: ['Прочее']
