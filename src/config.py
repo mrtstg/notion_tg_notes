@@ -12,6 +12,7 @@ class FileConfig:
     progress_values: list[str]
     categories_values: list[str]
     daily_notes: list[dict]
+    tg_ids: list[int]
 
     def __init__(self, path: str):
         self._path = path

@@ -21,6 +21,13 @@ api = NotionApi(CONFIG.token, loop)
 asyncio.set_event_loop(loop)
 
 
+class ACLMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: Message, data: dict):
+        if event.from_user is None or event.from_user.id not in CONFIG.tg_ids:
+            return
+        return await handler(event, data)
+
+
 class ApiClientPassMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: Message, data: dict):
         data["api_client"] = api
@@ -29,6 +36,7 @@ class ApiClientPassMiddleware(BaseMiddleware):
 
 async def main():
     dp = Dispatcher()
+    dp.message.middleware(ACLMiddleware())
     bot = Bot(CONFIG.tg_token)
 
     note_creating.router.message.middleware(ApiClientPassMiddleware())
