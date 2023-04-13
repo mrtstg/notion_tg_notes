@@ -21,6 +21,9 @@ async def get_next_week_notes(message: Message, api_client: NotionApi):
         ],
     )
     text = "Заметки на следующую неделю:\n"
+    if not notes.results:
+        await message.answer("Нет заметок на следующую неделю!")
+        return
     for note in notes.results:
         text += NotionNote.from_json(note).represent() + "\n"
     await message.answer(text)
