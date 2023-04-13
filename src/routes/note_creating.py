@@ -212,14 +212,17 @@ async def custon_yearless_date_range_input_action(
     message: Message, state: FSMContext, date_match: Match[str], api_client: NotionApi
 ):
     now = datetime.datetime.now()
-    await state.update_data(
-        end_date=datetime.datetime(
-            now.year, int(date_match.group(2)), int(date_match.group(1))
-        ),
-        begin_date=datetime.datetime(
-            now.year, int(date_match.group(4)), int(date_match.group(3))
-        ),
-    )
+    try:
+        await state.update_data(
+            end_date=datetime.datetime(
+                now.year, int(date_match.group(2)), int(date_match.group(1))
+            ),
+            begin_date=datetime.datetime(
+                now.year, int(date_match.group(4)), int(date_match.group(3))
+            ),
+        )
+    except Exception:
+        await message.answer("Неправильная дата!")
     await create_note_in_notion(message, state, api_client)
 
 
