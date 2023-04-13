@@ -155,6 +155,7 @@ class MultiSelectPageProperty(AbstractPageProperty):
 @dataclass
 class DatePropertyDelta:
     delta: datetime.timedelta
+    date_compared_to: datetime.datetime
     is_future: bool = True
 
 
@@ -235,7 +236,7 @@ class DatePageProperty(AbstractPageProperty):
         ).replace(tzinfo=pytz.UTC)
         now = datetime.datetime.now().replace(tzinfo=pytz.UTC)
         is_future = now < date
-        return DatePropertyDelta(max(now, date) - min(now, date), is_future)
+        return DatePropertyDelta(max(now, date) - min(now, date), date, is_future)
 
     @property
     def next_week_filter(self) -> dict:

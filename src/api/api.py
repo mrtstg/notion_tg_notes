@@ -68,6 +68,26 @@ class NotionNote:
         return obj
 
     def represent(self) -> str:
+        def _format_date(date: datetime.datetime) -> str:
+            now = datetime.datetime.now()
+            is_zero_time = date.minute == 0 and date.hour == 0
+            is_today = (
+                date.year == now.year
+                and date.month == now.month
+                and date.day == now.day
+            )
+
+            if is_zero_time and not is_today:
+                return date.strftime("%d.%m")
+
+            if not is_zero_time and not is_today:
+                return date.strftime("%d.%m %H:%M")
+
+            if not is_zero_time and is_today:
+                return date.strftime("%H:%M")
+
+            return ""
+
         importance: str | None = None
         delta_class = self.date.get_difference(True)
         minutes = delta_class.delta.seconds / 60
@@ -80,18 +100,8 @@ class NotionNote:
             case "Срочно":
                 importance = "🔥"
 
-        delta_text = (
-            ""
-            if not delta_class.is_future
-            else " [%(days)s %(hours)s:%(minutes)s ] "
-            % {
-                "days": ""
-                if delta_class.delta.days == 0
-                else f"{delta_class.delta.days} д., ",
-                "hours": int(hours),
-                "minutes": int(minutes),
-            }
-        )
+        delta_text = _format_date(delta_class.date_compared_to)
+        delta_text = f" [{delta_text}] " if delta_text != "" else delta_text
         return "%(importance)s%(delta_text)s %(title)s" % {
             "delta_text": delta_text,
             "importance": importance,
