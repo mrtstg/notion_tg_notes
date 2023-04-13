@@ -191,14 +191,17 @@ async def date_bindings_action(
 async def custom_yearless_date_input_action(
     message: Message, state: FSMContext, date_match: Match[str], api_client: NotionApi
 ):
-    await state.update_data(
-        end_date=None,
-        begin_date=datetime.datetime(
-            datetime.datetime.now().year,
-            int(date_match.group(2)),
-            int(date_match.group(1)),
-        ),
-    )
+    try:
+        await state.update_data(
+            end_date=None,
+            begin_date=datetime.datetime(
+                datetime.datetime.now().year,
+                int(date_match.group(2)),
+                int(date_match.group(1)),
+            ),
+        )
+    except Exception:
+        await message.answer("Неправильная дата!")
     await create_note_in_notion(message, state, api_client)
 
 
