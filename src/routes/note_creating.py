@@ -15,7 +15,10 @@ from .date_mapper import (
 )
 from . import make_row_keyboard
 from config import get_config
+from logger import get_logger
+import logging
 
+logger = get_logger(__name__, logging.INFO)
 router = Router()
 CONFIG = get_config()
 
@@ -52,10 +55,12 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
     note.importance.selected = data["importance"]
     note.progress.selected = data["progress"]
     note.remind.checked = data["remind"]
+    logger.info("Создаю заметку %s" % note.title_value)
 
     try:
         await api.create_note(note, CONFIG.db_id)
-    except:
+    except Exception as e:
+        logger.error("Не удалось создать заметку:" % e)
         message_data["text"] = "Ошибка при создании заметки!"
 
     await message.answer(**message_data)  # type: ignore
@@ -67,10 +72,12 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
 async def create_daily_notes(message: Message, api_client: NotionApi):
     created_amount: int = 0
     for note_data in CONFIG.daily_notes:
+        logger.info("Проверяю наличие заметки %s" % note_data["title"])
         search_res = await api_client.query_notes(
             CONFIG.db_id, TitlePageProperty("Title", note_data["title"]).equals_filter
         )
         if search_res.results:
+            logger.warn("Заметка уже существует.")
             continue
         note = NotionNote()
         note.title.text = note_data["title"]
@@ -80,7 +87,12 @@ async def create_daily_notes(message: Message, api_client: NotionApi):
         note.importance.selected = note_data["importance"]
         note.progress.selected = "Не начато"
         note.category.variants = note_data["category"]
-        await api_client.create_note(note, CONFIG.db_id)
+        try:
+            await api_client.create_note(note, CONFIG.db_id)
+        except Exception as e:
+            logger.error("Не удалось создать ежедневную заметку: %s" % e)
+            continue
+        logger.info("Создана заметка %s" % note_data["title"])
         created_amount += 1
     await message.answer(f"Создано {created_amount} заметок")
 

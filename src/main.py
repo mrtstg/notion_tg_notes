@@ -12,7 +12,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 from aiogram.types import Message
 from routes import common, note_creating, note_querying
+from logger import get_logger
+import logging
 
+logger = get_logger(__name__, logging.INFO)
 CONFIG = get_config()
 CONFIG.validate_daily_notes()
 
@@ -45,8 +48,10 @@ async def main():
     dp.include_router(note_querying.router)
     dp.include_router(note_creating.router)
 
+    logger.info("Бот начал работу!")
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == "__main__":
+    logger.info("Скрипт запущен!")
     loop.run_until_complete(main())

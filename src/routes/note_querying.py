@@ -5,13 +5,17 @@ from aiogram.types import Message
 from api.api import NotionApi, NotionNote
 from config import get_config
 from api.properties import CheckboxPageProperty, DatePageProperty, SelectPageProperty
+import logging
+from logger import get_logger
 
+logger = get_logger(__name__, logging.INFO)
 router = Router()
 CONFIG = get_config()
 
 
 @router.message(Command("week"))
 async def get_next_week_notes(message: Message, api_client: NotionApi):
+    logger.info("Получаю заметки на неделю.")
     notes = await api_client.query_notes(
         CONFIG.db_id,
         DatePageProperty("Date").next_week_filter,
@@ -20,6 +24,7 @@ async def get_next_week_notes(message: Message, api_client: NotionApi):
             SelectPageProperty("Importance").descending_sort,
         ],
     )
+    logger.info("Заметки на неделю получены!")
     text = "Заметки на следующую неделю:\n"
     if not notes.results:
         await message.answer("Нет заметок на следующую неделю!")
@@ -35,6 +40,7 @@ async def get_today_notes(message: Message, api_client: NotionApi):
     now = datetime.datetime(now.year, now.month, now.day)
     tomorrow = datetime.datetime.fromtimestamp(now.timestamp() + 86399)
 
+    logger.info("Получаю заметки на сегодня")
     notes = await api_client.query_notes(
         CONFIG.db_id,
         {
@@ -46,6 +52,7 @@ async def get_today_notes(message: Message, api_client: NotionApi):
         },
         [DatePageProperty("Date").ascending_sort],
     )
+    logger.info("Заметки на сегодня получены")
     text = "Заметки на сегодня:\n"
     if notes.results:
         for note in notes.results:
