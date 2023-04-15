@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 from api.api import NotionApi, NotionNote
-from api.properties import TitlePageProperty
+from api.properties import DatePageProperty, TitlePageProperty
 from .date_mapper import (
     AbstractDateMapper,
     ClosestWeekDayDateMapper,
@@ -74,7 +74,18 @@ async def create_daily_notes(message: Message, api_client: NotionApi):
     for note_data in CONFIG.daily_notes:
         logger.info("Проверяю наличие заметки %s" % note_data["title"])
         search_res = await api_client.query_notes(
-            CONFIG.db_id, TitlePageProperty("Title", note_data["title"]).equals_filter
+            CONFIG.db_id,
+            {
+                "and": [
+                    TitlePageProperty("Title", note_data["title"]).equals_filter,
+                    DatePageProperty(
+                        "Date", "Europe/Moscow", TodayDateMapper().get_begin_date()
+                    ).on_or_after_filter,
+                    DatePageProperty(
+                        "Date", "Europe/Moscow", TomorrowDateMapper().get_begin_date()
+                    ).on_or_before_filter,
+                ]
+            },
         )
         if search_res.results:
             logger.warn("Заметка уже существует.")
