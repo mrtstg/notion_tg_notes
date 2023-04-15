@@ -63,7 +63,7 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
         logger.error("Не удалось создать заметку:" % e)
         message_data["text"] = "Ошибка при создании заметки!"
 
-    await message.answer(**message_data)  # type: ignore
+    await message.reply(**message_data)  # type: ignore
     await state.set_state(None)
     await state.set_data({})
 
@@ -105,12 +105,12 @@ async def create_daily_notes(message: Message, api_client: NotionApi):
             continue
         logger.info("Создана заметка %s" % note_data["title"])
         created_amount += 1
-    await message.answer(f"Создано {created_amount} заметок")
+    await message.reply(f"Создано {created_amount} заметок")
 
 
 @router.message(Command("note"))
 async def create_note(message: Message, state: FSMContext):
-    await message.answer("Введите заголовок заметки: ")
+    await message.reply("Введите заголовок заметки: ")
     await state.update_data(categories=[])
     await state.set_state(NoteCreatingStage.TITLE)
 
@@ -118,7 +118,7 @@ async def create_note(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.TITLE, F.text.len() > 0)
 async def set_note_title(message: Message, state: FSMContext):
     await state.update_data(title=message.text)
-    await message.answer(
+    await message.reply(
         text="Выберите уровень важности:",
         reply_markup=make_row_keyboard(CONFIG.importance_values),
     )
@@ -128,7 +128,7 @@ async def set_note_title(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.IMPORTANCE, F.text.in_(CONFIG.importance_values))
 async def set_note_importance(message: Message, state: FSMContext):
     await state.update_data(importance=message.text)
-    await message.answer(
+    await message.reply(
         text="Выберите начальный прогресс заметки:",
         reply_markup=make_row_keyboard(CONFIG.progress_values),
     )
@@ -138,7 +138,7 @@ async def set_note_importance(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.PROGESS, F.text.in_(CONFIG.progress_values))
 async def set_note_progress(message: Message, state: FSMContext):
     await state.update_data(progress=message.text)
-    await message.answer(
+    await message.reply(
         text="Напомнить о наличии заметки?",
         reply_markup=make_row_keyboard(["Да", "Нет"]),
     )
@@ -148,7 +148,7 @@ async def set_note_progress(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.REMIND, F.text.in_(["Да", "Нет"]))
 async def set_note_remind(message: Message, state: FSMContext):
     await state.update_data(remind=message.text == "Да")
-    await message.answer(
+    await message.reply(
         text="Введите категории заметки.",
         reply_markup=make_row_keyboard(CONFIG.categories_values + ["done"]),
     )
@@ -157,7 +157,7 @@ async def set_note_remind(message: Message, state: FSMContext):
 
 @router.message(NoteCreatingStage.CATEGORIES, F.text == "done")
 async def end_note_creation(message: Message, state: FSMContext):
-    await message.answer(
+    await message.reply(
         text="Введите дату или диапазон дат, на которое нужно назначить заметку.",
         reply_markup=make_row_keyboard(available_date_mappers_keys),
     )
@@ -173,12 +173,10 @@ async def note_category_action(message: Message, state: FSMContext):
     cat_list: list[str] = (await state.get_data())["categories"]
     if message.text in cat_list:
         cat_list.pop(cat_list.index(message.text))
-        await message.answer(
-            text="Категория удалена!\n" + generate_categories(cat_list)
-        )
+        await message.reply(text="Категория удалена!\n" + generate_categories(cat_list))
     else:
         cat_list.append(message.text)
-        await message.answer(
+        await message.reply(
             text="Категория добавлена!\n" + generate_categories(cat_list)
         )
 
@@ -212,7 +210,7 @@ async def custom_yearless_date_input_action(
             ),
         )
     except Exception:
-        await message.answer("Неправильная дата!")
+        await message.reply("Неправильная дата!")
     await create_note_in_notion(message, state, api_client)
 
 
@@ -236,7 +234,7 @@ async def custon_yearless_date_range_input_action(
             ),
         )
     except Exception:
-        await message.answer("Неправильная дата!")
+        await message.reply("Неправильная дата!")
     await create_note_in_notion(message, state, api_client)
 
 
@@ -258,5 +256,5 @@ async def custom_time_range_input_action(
         )
         await state.update_data(end_date=None, begin_date=now)
     except:
-        await message.answer("Неправильная дата!")
+        await message.reply("Неправильная дата!")
     await create_note_in_notion(message, state, api_client)
