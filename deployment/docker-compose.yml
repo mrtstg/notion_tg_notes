@@ -1,0 +1,23 @@
+version: '3'
+services:
+  bot:
+    image: notion-notes-tg
+    container_name: notes-bot
+    volumes:
+      - ../config.yaml:/usr/src/app/config.yaml
+    environment:
+      - LAUNCH_COMMAND=python3 src/main.py
+    networks:
+      - notion-notes-tg-network
+  bot-scheduler:
+    image: notion-notes-tg
+    container_name: notes-bot-scheduler
+    volumes:
+      - ../config.yaml:/usr/src/app/config.yaml
+    environment:
+      - LAUNCH_COMMAND=python3 src/scheduler.py
+    networks:
+      - notion-notes-tg-network
+
+networks:
+  notion-notes-tg-network:

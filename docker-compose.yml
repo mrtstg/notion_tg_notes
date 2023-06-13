@@ -1,7 +1,0 @@
-version: '3'
-services:
-  bot:
-    image: notion-notes-tg
-    container_name: notes-bot
-    volumes:
-      - ./config.yaml:/usr/src/app/config.yaml
