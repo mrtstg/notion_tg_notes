@@ -1,11 +1,4 @@
-from api.api import NotionApi, NotionNote
-import datetime
-from api.properties import (
-    DatePageProperty,
-    MultiSelectPageProperty,
-    SelectPageProperty,
-    TitlePageProperty,
-)
+from api.api import NotionApi
 from config import get_config
 import asyncio
 from aiogram import Bot, Dispatcher
