@@ -33,6 +33,9 @@ async def main():
 
             notes = await api.get_today_notes(CONFIG.db_id, True)
             timeflag = f't{now_date.strftime("%H:%M")}'
+            if timeflag == "t07:00":
+                await api.create_today_notes(CONFIG.db_id, CONFIG.daily_notes)
+
             filtered_notes: list[NotionNote] = list(
                 filter(lambda x: timeflag in x.remind.variants, notes)
             )
