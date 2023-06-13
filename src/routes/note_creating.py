@@ -71,41 +71,8 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
 @router.message(Command("daily"))
 async def create_daily_notes(message: Message, api_client: NotionApi):
     created_amount: int = 0
-    for note_data in CONFIG.daily_notes:
-        logger.info("Проверяю наличие заметки %s" % note_data["title"])
-        search_res = await api_client.query_notes(
-            CONFIG.db_id,
-            {
-                "and": [
-                    TitlePageProperty("Title", note_data["title"]).equals_filter,
-                    DatePageProperty(
-                        "Date", "Europe/Moscow", TodayDateMapper().get_begin_date()
-                    ).on_or_after_filter,
-                    DatePageProperty(
-                        "Date", "Europe/Moscow", TomorrowDateMapper().get_begin_date()
-                    ).on_or_before_filter,
-                ]
-            },
-        )
-        if search_res.results:
-            logger.warn("Заметка уже существует.")
-            continue
-        note = NotionNote()
-        note.title.text = note_data["title"]
-        note.remind.variants = note_data["remind"]
-        note.date.begin_date = TodayDateMapper().get_begin_date()
-        note.date.end_date = None
-        note.importance.selected = note_data["importance"]
-        note.progress.selected = "Не начато"
-        note.category.variants = note_data["category"]
-        try:
-            await api_client.create_note(note, CONFIG.db_id)
-        except Exception as e:
-            logger.error("Не удалось создать ежедневную заметку: %s" % e)
-            continue
-        logger.info("Создана заметка %s" % note_data["title"])
-        created_amount += 1
-    await message.reply(f"Создано {created_amount} заметок")
+    await api_client.create_today_notes(CONFIG.db_id, CONFIG.daily_notes)
+    await message.reply(f"Созданы недостающие заметки")
 
 
 @router.message(Command("note"))

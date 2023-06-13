@@ -2,11 +2,16 @@ from __future__ import annotations
 import datetime
 from typing import Any
 from config import FileConfig
-from api.properties import DatePageProperty, SelectPageProperty
+from api.properties import DatePageProperty, SelectPageProperty, TitlePageProperty
+from routes.date_mapper import TodayDateMapper
 from . import API_URL
 from .structs import NotionDatabase, NotionSearchResult, NotionNote
 import aiohttp
 import asyncio
+from logger import get_logger
+import logging
+
+logger = get_logger(__name__, logging.INFO)
 
 
 class NotionApi:
@@ -130,6 +135,57 @@ class NotionApi:
             },
         )
         return NotionSearchResult(await resp.json(), results._sorts)
+
+    async def find_today_note_by_title(
+        self, database_id: str, title: str
+    ) -> NotionNote | None:
+        now_date = datetime.datetime.now()
+        search_res = await self.query_notes(
+            database_id,
+            {
+                "and": [
+                    TitlePageProperty("Title", title).equals_filter,
+                    DatePageProperty(
+                        "Date",
+                        begin_date=datetime.datetime(
+                            now_date.year, now_date.month, now_date.day
+                        ),
+                    ).on_or_after_filter,
+                    DatePageProperty(
+                        "Date",
+                        begin_date=datetime.datetime(
+                            now_date.year, now_date.month, now_date.day, 23, 59
+                        ),
+                    ).on_or_before_filter,
+                ]
+            },
+        )
+        if not search_res.results:
+            return None
+        return NotionNote.from_json(search_res.results[0])
+
+    async def create_today_notes(self, database_id: str, notes: list[dict]):
+        for note_data in notes:
+            found_note = await self.find_today_note_by_title(
+                database_id, note_data["title"]
+            )
+            if found_note is not None:
+                logger.warn("Заметка %s уже существует" % note_data["title"])
+                continue
+            note = NotionNote()
+            note.title.text = note_data["title"]
+            note.remind.variants = self.config.default_remind_flags
+            note.date.begin_date = TodayDateMapper().get_begin_date()
+            note.date.end_date = None
+            note.importance.selected = note_data["importance"]
+            note.progress.selected = self.config.progress_values[0]
+            note.category.variants = note_data["category"]
+            try:
+                await self.create_note(note, database_id)
+            except Exception as e:
+                logger.error("Не удалось создать заметку: %s" % e)
+                continue
+            logger.info("Создана заметка %s" % note_data["title"])
 
     def __del__(self):
         if self.client is not None:
