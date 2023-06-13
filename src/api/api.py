@@ -1,5 +1,8 @@
 from __future__ import annotations
+import datetime
 from typing import Any
+from config import FileConfig
+from api.properties import DatePageProperty, SelectPageProperty
 from . import API_URL
 from .structs import NotionDatabase, NotionSearchResult, NotionNote
 import aiohttp
@@ -7,17 +10,19 @@ import asyncio
 
 
 class NotionApi:
+    _token: str
     client: aiohttp.ClientSession | None = None
-    token: str
     version: str
+    config: FileConfig
 
     def __init__(
         self,
-        token: str,
+        config: FileConfig,
         event_loop: asyncio.AbstractEventLoop,
         version: str = "2022-06-28",
     ):
-        self.token = token
+        self._token = config.token
+        self.config = config
         self.version = version
         event_loop.run_until_complete(self._init_client_session())
 
@@ -25,7 +30,7 @@ class NotionApi:
         self.client = aiohttp.ClientSession(
             base_url=API_URL,
             headers={
-                "Authorization": f"Bearer {self.token}",
+                "Authorization": f"Bearer {self._token}",
                 "Notion-Version": self.version,
             },
         )
@@ -74,6 +79,42 @@ class NotionApi:
         )
         resp.raise_for_status()
         return NotionSearchResult(await resp.json(), sorts)
+
+    async def get_today_notes(
+        self, database_id: str, filter_finished: bool
+    ) -> list[NotionNote]:
+        notes: list[NotionNote] = []
+        now_date = datetime.datetime.now()
+        filters: list[dict] = [
+            DatePageProperty(
+                "Date",
+                begin_date=datetime.datetime(
+                    now_date.year, now_date.month, now_date.day
+                ),
+            ).on_or_after_filter,
+            DatePageProperty(
+                "Date",
+                begin_date=datetime.datetime(
+                    now_date.year, now_date.month, now_date.day, 23, 59
+                ),
+            ).on_or_before_filter,
+        ]
+        if filter_finished:
+            filters.append(
+                SelectPageProperty(
+                    "Progress", self.config.progress_values[-1]
+                ).not_equals_filter
+            )
+        res: NotionSearchResult = await self.query_notes(
+            database_id,
+            {"and": filters},
+        )
+        while True:
+            notes.extend([NotionNote.from_json(el) for el in res.results])
+            if res.next_cursor is None:
+                break
+            res = await self.load_next_query_page(database_id, res)
+        return notes
 
     async def load_next_query_page(
         self, database_id: str, results: NotionSearchResult, page_size: int = 100

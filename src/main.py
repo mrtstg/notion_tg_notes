@@ -13,7 +13,7 @@ CONFIG = get_config()
 CONFIG.validate_daily_notes()
 
 loop = asyncio.new_event_loop()
-api = NotionApi(CONFIG.token, loop)
+api = NotionApi(CONFIG, loop)
 asyncio.set_event_loop(loop)
 
 
