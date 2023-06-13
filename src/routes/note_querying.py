@@ -57,7 +57,7 @@ async def get_tomorrow_notes(message: Message, api_client: NotionApi):
     logger.info("Заметки на завтра получены")
     if not notes.results:
         await message.reply("Заметок на завтра нет!")
-
+        return
     text = "Заметки на завтра:\n"
     for note in notes.results:
         text += NotionNote.from_json(note).represent() + "\n"
