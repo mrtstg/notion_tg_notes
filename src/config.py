@@ -11,6 +11,7 @@ class FileConfig:
     remind_values: list[str]
     progress_values: list[str]
     categories_values: list[str]
+    default_remind_flags: list[str]
     daily_notes: list[dict]
     tg_ids: list[int]
 

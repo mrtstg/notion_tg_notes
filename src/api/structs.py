@@ -92,7 +92,7 @@ class NotionSearchResult:
 
 class NotionNote:
     title: TitlePageProperty
-    remind: CheckboxPageProperty
+    remind: MultiSelectPageProperty
     date: DatePageProperty
     importance: SelectPageProperty
     progress: SelectPageProperty
@@ -100,7 +100,7 @@ class NotionNote:
 
     def __init__(self):
         self.title = TitlePageProperty("Title")
-        self.remind = CheckboxPageProperty("Remind")
+        self.remind = MultiSelectPageProperty("Remind")
         self.date = DatePageProperty("Date", "Europe/Moscow")
         self.importance = SelectPageProperty("Importance")
         self.progress = SelectPageProperty("Progress")
@@ -110,7 +110,9 @@ class NotionNote:
     def from_json(page: dict) -> NotionNote:
         properties: dict = page["properties"]
         obj = NotionNote()
-        obj.remind.checked = properties["Remind"]["checkbox"]
+        obj.remind.variants = list(
+            map(lambda x: x["name"], properties["Remind"]["multi_select"])
+        )
         obj.title.text = properties["Title"]["title"][0]["text"]["content"]
         obj.importance.selected = properties["Importance"]["select"]["name"]
         obj.progress.selected = properties["Progress"]["select"]["name"]
@@ -175,8 +177,8 @@ class NotionNote:
         return self.title.text
 
     @property
-    def remind_value(self) -> bool:
-        return self.remind.checked
+    def remind_value(self) -> list[str]:
+        return self.remind.variants
 
     @property
     def begin_date_value(self) -> datetime.datetime:

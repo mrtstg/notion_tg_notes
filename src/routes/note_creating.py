@@ -54,7 +54,7 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
     note.title.text = data["title"]
     note.importance.selected = data["importance"]
     note.progress.selected = data["progress"]
-    note.remind.checked = data["remind"]
+    note.remind.variants = data["remind"]
     logger.info("Создаю заметку %s" % note.title_value)
 
     try:
@@ -92,7 +92,7 @@ async def create_daily_notes(message: Message, api_client: NotionApi):
             continue
         note = NotionNote()
         note.title.text = note_data["title"]
-        note.remind.checked = True
+        note.remind.variants = note_data["remind"]
         note.date.begin_date = TodayDateMapper().get_begin_date()
         note.date.end_date = None
         note.importance.selected = note_data["importance"]
@@ -137,7 +137,9 @@ async def set_note_importance(message: Message, state: FSMContext):
 
 @router.message(NoteCreatingStage.REMIND, F.text.in_(["Да", "Нет"]))
 async def set_note_remind(message: Message, state: FSMContext):
-    await state.update_data(remind=message.text == "Да")
+    await state.update_data(
+        remind=[] if message.text == "Нет" else CONFIG.default_remind_flags
+    )
     await message.reply(
         text="Введите категории заметки.",
         reply_markup=make_row_keyboard(CONFIG.categories_values + ["done"]),
