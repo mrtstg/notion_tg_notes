@@ -37,7 +37,7 @@ available_date_mappers_keys: list[str] = list(available_date_mappers.keys())
 
 
 class NoteCreatingStage(StatesGroup):
-    IMPORTANCE, REMIND, PROGESS, CATEGORIES, TITLE, DATE = [State() for _ in range(6)]
+    IMPORTANCE, REMIND, CATEGORIES, TITLE, DATE = [State() for _ in range(5)]
 
 
 async def create_note_in_notion(message: Message, state: FSMContext, api: NotionApi):
@@ -111,7 +111,7 @@ async def create_daily_notes(message: Message, api_client: NotionApi):
 @router.message(Command("note"))
 async def create_note(message: Message, state: FSMContext):
     await message.reply("Введите заголовок заметки: ")
-    await state.update_data(categories=[])
+    await state.update_data(categories=[], progress=CONFIG.progress_values[0])
     await state.set_state(NoteCreatingStage.TITLE)
 
 
@@ -128,16 +128,6 @@ async def set_note_title(message: Message, state: FSMContext):
 @router.message(NoteCreatingStage.IMPORTANCE, F.text.in_(CONFIG.importance_values))
 async def set_note_importance(message: Message, state: FSMContext):
     await state.update_data(importance=message.text)
-    await message.reply(
-        text="Выберите начальный прогресс заметки:",
-        reply_markup=make_row_keyboard(CONFIG.progress_values),
-    )
-    await state.set_state(NoteCreatingStage.PROGESS)
-
-
-@router.message(NoteCreatingStage.PROGESS, F.text.in_(CONFIG.progress_values))
-async def set_note_progress(message: Message, state: FSMContext):
-    await state.update_data(progress=message.text)
     await message.reply(
         text="Напомнить о наличии заметки?",
         reply_markup=make_row_keyboard(["Да", "Нет"]),
