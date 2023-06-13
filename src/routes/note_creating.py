@@ -70,7 +70,6 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
 
 @router.message(Command("daily"))
 async def create_daily_notes(message: Message, api_client: NotionApi):
-    created_amount: int = 0
     await api_client.create_today_notes(CONFIG.db_id, CONFIG.daily_notes)
     await message.reply(f"Созданы недостающие заметки")
 
