@@ -17,6 +17,8 @@ categories_values:
   - Прочее
   - Личные проекты
 
+default_remind_flags: ['t08:00', 't15:00']
+
 daily_notes:
   -
     title: Note title
