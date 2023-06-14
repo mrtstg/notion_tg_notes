@@ -1,7 +1,7 @@
 FROM python:3.11 AS builder
 ENV PYTHONUNBUFFERED=1
 WORKDIR /usr/src/app
-COPY poetry.lock pyproject.toml ./
+COPY pyproject.toml ./
 RUN pip3 install --no-cache-dir poetry==1.4.2
 RUN poetry export --without-hashes --without dev,test -f requirements.txt -o requirements.txt
 RUN python -m pip install --upgrade pip
