@@ -23,8 +23,8 @@ async def send_message(bot: Bot, text: str):
 async def main():
     bot = Bot(CONFIG.tg_token)
     last_minute = datetime.datetime.fromtimestamp(time.time() - 60).minute
-    try:
-        while True:
+    while True:
+        try:
             now_date = datetime.datetime.now()
             if now_date.minute == last_minute:
                 await asyncio.sleep(5)
@@ -45,9 +45,9 @@ async def main():
             for note in filtered_notes:
                 text += note.represent() + "\n"
             await send_message(bot, text)
-    except Exception as e:
-        logger.error(str(e))
-        await asyncio.sleep(15)
+        except Exception as e:
+            logger.error(str(e))
+            await asyncio.sleep(15)
 
 
 if __name__ == "__main__":
