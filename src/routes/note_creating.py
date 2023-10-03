@@ -60,7 +60,7 @@ async def create_note_in_notion(message: Message, state: FSMContext, api: Notion
     try:
         await api.create_note(note, CONFIG.db_id)
     except Exception as e:
-        logger.error("Не удалось создать заметку:" % e)
+        logger.error("Не удалось создать заметку: %s" % e)
         message_data["text"] = "Ошибка при создании заметки!"
 
     await message.reply(**message_data)  # type: ignore
