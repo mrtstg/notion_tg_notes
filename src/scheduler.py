@@ -25,26 +25,26 @@ async def main():
     last_minute = datetime.datetime.fromtimestamp(time.time() - 60).minute
     while True:
         try:
-            now_date = datetime.datetime.now()
-            if now_date.minute == last_minute:
-                await asyncio.sleep(5)
-                continue
-            last_minute = now_date.minute
+            while True:
+                now_date = datetime.datetime.now()
+                if now_date.minute == last_minute:
+                    await asyncio.sleep(5)
+                    continue
+                last_minute = now_date.minute
+                notes = await api.get_today_notes(CONFIG.db_id, True)
+                timeflag = f't{now_date.strftime("%H:%M")}'
+                if timeflag == "t07:00":
+                    await api.create_today_notes(CONFIG.db_id, CONFIG.daily_notes)
 
-            notes = await api.get_today_notes(CONFIG.db_id, True)
-            timeflag = f't{now_date.strftime("%H:%M")}'
-            if timeflag == "t07:00":
-                await api.create_today_notes(CONFIG.db_id, CONFIG.daily_notes)
-
-            filtered_notes: list[NotionNote] = list(
-                filter(lambda x: timeflag in x.remind.variants, notes)
-            )
-            if not filtered_notes:
-                continue
-            text = "🔔Напоминание о незавершенных заметках:\n"
-            for note in filtered_notes:
-                text += note.represent() + "\n"
-            await send_message(bot, text)
+                filtered_notes: list[NotionNote] = list(
+                    filter(lambda x: timeflag in x.remind.variants, notes)
+                )
+                if not filtered_notes:
+                    continue
+                text = "🔔Напоминание о незавершенных заметках:\n"
+                for note in filtered_notes:
+                    text += note.represent() + "\n"
+                await send_message(bot, text)
         except Exception as e:
             logger.error(str(e))
             await asyncio.sleep(15)

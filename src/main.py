@@ -42,7 +42,12 @@ async def main():
     dp.include_router(note_creating.router)
 
     logger.info("Бот начал работу!")
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    while True:
+        try:
+            await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+        except Exception as e:
+            logger.error(str(e))
+            await asyncio.sleep(10)
 
 
 if __name__ == "__main__":
