@@ -1,5 +1,4 @@
 FROM python:3.11 AS builder
-ENV PYTHONUNBUFFERED=1
 WORKDIR /usr/src/app
 COPY pyproject.toml ./
 RUN pip3 install --no-cache-dir poetry==1.4.2
@@ -8,6 +7,7 @@ RUN python -m pip install --upgrade pip
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1
 ENV TZ=Europe/Moscow
 ENV LANG C.UTF-8
 WORKDIR /usr/src/app
